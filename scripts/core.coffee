@@ -41,9 +41,7 @@ module.exports = (robot) ->
           res.send "JSON Parsing Error"
           return
 
-        Response = data.Response;
-
-        if(Response == "false")
+        if(data.Response == "false")
           res.send "No Results. Try another search."
           return
 
