@@ -29,11 +29,20 @@ module.exports = (robot) ->
   #           OR
   #         Summary of target media and critic ratings
   ###
-  robot.respond /fetch (.+)/i, (res) ->
+  robot.respond /fetch (.+) (movie|series) ([0-9]{4}?)/i, (res) ->
     mediaTitle = res.match[1]
+    mediaType = res.match[2]
+    mediaYear = res.match[3]
 
+    queryURL = "http://www.omdbapi.com?r=json&t=#{mediaTitle}&tomatoes=true"
+    if mediaType?
+      queryURL+="&type=#{mediaType}"
+    if mediaYear?
+      queryURL+="&y=#{mediaYear}"
+
+      res.send queryURL
     #Alter to use search results
-    robot.http("http://www.omdbapi.com?r=json&t=#{mediaTitle}&tomatoes=true")
+    robot.http(queryURL)
       .header('Accept', 'application/json')
       .get() (err, httpRes, body) ->
         try
@@ -51,6 +60,7 @@ module.exports = (robot) ->
         Rating = data.Rated
         Genres = data.Genre
         Plot = data.Plot
+        Type = data.Type
         Poster = data.Poster
         Metascore = data.Metascore
         imdbScore = data.imdbRating
@@ -75,7 +85,7 @@ module.exports = (robot) ->
         else
           res.send "#{Poster}\n"
 
-        res.send "#{Title} - #{Rating} - (#{Year})\n
+        res.send "#{Title} - #{Rating} - #{Type} - (#{Year})\n
           Genre(s): #{Genres}\n
           Summary: #{Plot}\n
           IMDB Rating: #{imdbScore}\n
