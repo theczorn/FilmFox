@@ -3,24 +3,25 @@
 #   Core functionality for Filmfox Hipchat robot
 #
 ###
-#fs = require("fs");
+fs = require 'fs'
 module.exports = (robot) ->
 
   #Get Foxy With it
   robot.respond /get foxy/i, (res) ->
-    res.send "foobar"
-    #img = fs.readfile("./assets/foxy.gif")
-    #res.send(img, 'binary')
+    fs.ReadStream("./assets/foxy.gif")
+
 
   ###
-  # Summary: Do a series of http calls and retrieve where target media is streaming
+  # Summary: Do a series of http calls and retrieve where target media is
+  # streaming
   # Input: Name of target media.
   # Output: Series of resultant data to refine from
   #           OR
   #         Ability to stream media target on various platforms
   ###
   robot.respond /streamit (.+)/i, (res) ->
-    res.send "watever"
+    res.send ""
+
   ###
   # Summary: Retrieve summary of info about media
   # Input: Name of target media
@@ -41,8 +42,8 @@ module.exports = (robot) ->
           res.send "JSON Parsing Error"
           return
 
-        if(data.Response == "false")
-          res.send "No Results. Try another search."
+        if(data.Response == "False")
+          res.send data.Error + " Try another search."
           return
 
         Title = data.Title
@@ -50,23 +51,37 @@ module.exports = (robot) ->
         Rating = data.Rated
         Genres = data.Genre
         Plot = data.Plot
-        Poster= data.Poster
+        Poster = data.Poster
         Metascore = data.Metascore
         imdbScore = data.imdbRating
-        rtUserScore = data.tomatoMeter
-        rtCriticScore = data.tomatoUserMeter
+        rtCriticScore = data.tomatoMeter
+        rtUserScore = data.tomatoUserMeter
 
-        if Poster=="N/A"
-          Poster="STOCK IMAGE HERE"
+        if (Metascore != "N/A")
+          Metascore +="/100"
 
-        res.send "#{Poster}\n"
+        if (imdbScore != "N/A")
+          imdbScore +="/10"
+
+        if (rtCriticScore != "N/A")
+          rtCriticScore += "/100"
+
+        if (rtUserScore != "N/A")
+          rtUserScore += "/100"
+
+        if Poster is "N/A"
+          Poster = fs.ReadStream("./assets/notfound.png")
+          res.send "\n"
+        else
+          res.send "#{Poster}\n"
+
         res.send "#{Title} - #{Rating} - (#{Year})\n
-                  Genre(s): #{Genres}\n
-                  Summary: #{Plot}\n
-                  IMDB Rating: #{imdbScore}/10\n
-                  Metacritic Rating: #{Metascore}/100\n
-                  Rotten Tomatoes Critics Rating: #{rtCriticScore}/100\n
-                  Rotten Tomatoes User Rating: #{rtUserScore}/100"
+          Genre(s): #{Genres}\n
+          Summary: #{Plot}\n
+          IMDB Rating: #{imdbScore}\n
+          Metacritic Rating: #{Metascore}\n
+          Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
+          Rotten Tomatoes User Rating: #{rtUserScore}"
         return
 
   ###
@@ -75,6 +90,5 @@ module.exports = (robot) ->
   # Output: Random media
   ###
   robot.respond /random/i, (res) ->
-    res.send "TacoLazerAnnihilator" #make this a random statement based on randomized array concat
-
+    res.send "TacoLazerAnnihilator" #randomize output from arrays
     robot.http("http://www/omdbapi.com/r=json&s=#{foobar}")
