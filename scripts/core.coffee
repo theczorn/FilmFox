@@ -10,7 +10,6 @@ module.exports = (robot) ->
   robot.respond /get foxy/i, (res) ->
     fs.ReadStream("./assets/foxy.gif")
 
-
   ###
   # Summary: Do a series of http calls and retrieve where target media is
   # streaming
@@ -24,23 +23,30 @@ module.exports = (robot) ->
 
   ###
   # Summary: Retrieve summary of info about media
-  # Input: Name of target media
+  # Input:
+  # (1) - Name of show/film to search for [REQUIRED]
+  # (2) - Type of data to search for --m/--movie OR --s/--series [OPTIONAL]
+  # (3) - Four Digit Year of release --XXXX [OPTIONAL]
   # Output: Series of resultant data to refine from
   #           OR
   #         Summary of target media and critic ratings
+  # NOTE: Regex
   ###
-  robot.respond /fetch (.+) (movie|series) ([0-9]{4}?)/i, (res) ->
+  robot.respond /fetch (.+?(?= --|$))(?: )?(--m(?:ovie)?|--s(?:eries)?)?(?: )?(--[0-9]{4})?/i, (res) ->
     mediaTitle = res.match[1]
+    #CZTODO: get regexp and some way to filter out mis-ordered vars
     mediaType = res.match[2]
     mediaYear = res.match[3]
 
     queryURL = "http://www.omdbapi.com?r=json&t=#{mediaTitle}&tomatoes=true"
     if mediaType?
+      mediaType = mediaType.replace "--",""
       queryURL+="&type=#{mediaType}"
     if mediaYear?
+      mediaYear = mediaYear.replace "--",""
       queryURL+="&y=#{mediaYear}"
 
-      res.send queryURL
+    res.send queryURL
     #Alter to use search results
     robot.http(queryURL)
       .header('Accept', 'application/json')
