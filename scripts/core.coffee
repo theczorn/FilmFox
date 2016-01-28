@@ -33,7 +33,6 @@ module.exports = (robot) ->
   ###
   robot.respond /fetch (.+?(?= --|$))(?: )?(--m(?:ovie)?|--s(?:eries)?)?(?: )?(--[0-9]{4})?/i, (res) ->
     mediaTitle = res.match[1]
-    #CZTODO: get regexp and some way to filter out mis-ordered vars
     mediaType = res.match[2]
     mediaYear = res.match[3]
 
@@ -45,7 +44,6 @@ module.exports = (robot) ->
       mediaYear = mediaYear.replace "--",""
       queryURL+="&y=#{mediaYear}"
 
-    res.send queryURL
     #Alter to use search results
     robot.http(queryURL)
       .header('Accept', 'application/json')
@@ -100,10 +98,67 @@ module.exports = (robot) ->
         return
 
   ###
-  # Summary: Retrieve a Random Film/TV show
+  # Summary: Retrieve a Random Film/TV show based by targetting an IMDB id
   # Input: N/A
   # Output: Random media
+  # NOTE: IMDB hosts all of it's film/show data under a 7 digit id. IMDB is
+  # wasteful in using these so there is no real guarantee that the id in question
+  # exists, as they are "recycled". 404 results will generate
+  # a new ID and search again until a non-404 is found OR 5 failures are hit.
+  # Rough IMDB Stats: http://www.imdb.com/stats
   ###
   robot.respond /random/i, (res) ->
-    res.send "TacoLazerAnnihilator" #randomize output from arrays
-    robot.http("http://www/omdbapi.com/r=json&s=#{foobar}")
+    #Generate IMDB ID and pad with up to 6 zeroes
+    imdbID = ("000000" + Math.random(1,3610267+1)).slice(-7)
+    res.send "#{imdbID}"
+    robot.http("http://www.omdbapi.com?r=json&i=tt#{imdbID}&tomatoes=true")
+      .header('Accept', 'application/json')
+      .get() (err, httpRes, body) ->
+        try
+          data = JSON.parse body
+        catch error
+          res.send "JSON Parsing Error"
+          return
+
+        if(data.Response == "False")
+          res.send data.Error + " Try another search."
+          return
+
+        Title = data.Title
+        Year = data.Year
+        Rating = data.Rated
+        Genres = data.Genre
+        Plot = data.Plot
+        Type = data.Type.charAt(0).toUpperCase() + data.Type.slice(1) #capitalize first letter
+        Poster = data.Poster
+        Metascore = data.Metascore
+        imdbScore = data.imdbRating
+        rtCriticScore = data.tomatoMeter
+        rtUserScore = data.tomatoUserMeter
+
+        if (Metascore != "N/A")
+          Metascore +="/100"
+
+        if (imdbScore != "N/A")
+          imdbScore +="/10"
+
+        if (rtCriticScore != "N/A")
+          rtCriticScore += "/100"
+
+        if (rtUserScore != "N/A")
+          rtUserScore += "/100"
+
+        if Poster is "N/A"
+          Poster = fs.ReadStream("./assets/notfound.png")
+          res.send "\n"
+        else
+          res.send "#{Poster}\n"
+
+        res.send "#{Title} - #{Rating} - #{Type} - (#{Year})\n
+          Genre(s): #{Genres}\n
+          Summary: #{Plot}\n
+          IMDB Rating: #{imdbScore}\n
+          Metacritic Rating: #{Metascore}\n
+          Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
+          Rotten Tomatoes User Rating: #{rtUserScore}"
+        return
