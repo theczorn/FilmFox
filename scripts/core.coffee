@@ -30,7 +30,6 @@ module.exports = (robot) ->
   # Output: Series of resultant data to refine from
   #           OR
   #         Summary of target media and critic ratings
-  # NOTE: Regex
   ###
   robot.respond /fetch (.+?(?= --|$))(?: )?(--m(?:ovie)?|--s(?:eries)?)?(?: )?(--[0-9]{4})?/i, (res) ->
     mediaTitle = res.match[1]
@@ -40,7 +39,7 @@ module.exports = (robot) ->
 
     queryURL = "http://www.omdbapi.com?r=json&t=#{mediaTitle}&tomatoes=true"
     if mediaType?
-      mediaType = mediaType.replace "--",""
+      mediaType = if mediaType[2] == "s" then "series" else "movie"
       queryURL+="&type=#{mediaType}"
     if mediaYear?
       mediaYear = mediaYear.replace "--",""
@@ -66,7 +65,7 @@ module.exports = (robot) ->
         Rating = data.Rated
         Genres = data.Genre
         Plot = data.Plot
-        Type = data.Type
+        Type = data.Type.charAt(0).toUpperCase() + data.Type.slice(1) #capitalize first letter
         Poster = data.Poster
         Metascore = data.Metascore
         imdbScore = data.imdbRating
