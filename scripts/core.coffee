@@ -57,44 +57,8 @@ module.exports = (robot) ->
         if(data.Response == "False")
           res.send data.Error + " Try another search."
           return
-
-        Title = data.Title
-        Year = data.Year
-        Rating = data.Rated
-        Genres = data.Genre
-        Plot = data.Plot
-        Type = data.Type.charAt(0).toUpperCase() + data.Type.slice(1) #capitalize first letter
-        Poster = data.Poster
-        Metascore = data.Metascore
-        imdbScore = data.imdbRating
-        rtCriticScore = data.tomatoMeter
-        rtUserScore = data.tomatoUserMeter
-
-        if (Metascore != "N/A")
-          Metascore +="/100"
-
-        if (imdbScore != "N/A")
-          imdbScore +="/10"
-
-        if (rtCriticScore != "N/A")
-          rtCriticScore += "/100"
-
-        if (rtUserScore != "N/A")
-          rtUserScore += "/100"
-
-        if Poster is "N/A"
-          Poster = fs.ReadStream("./assets/notfound.png")
-          res.send "\n"
-        else
-          res.send "#{Poster}\n"
-
-        res.send "#{Title} - #{Rating} - #{Type} - (#{Year})\n
-          Genre(s): #{Genres}\n
-          Summary: #{Plot}\n
-          IMDB Rating: #{imdbScore}\n
-          Metacritic Rating: #{Metascore}\n
-          Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
-          Rotten Tomatoes User Rating: #{rtUserScore}"
+          
+        outputMovieData(data, res)
         return
 
   ###
@@ -110,7 +74,6 @@ module.exports = (robot) ->
   robot.respond /random/i, (res) ->
     #Generate IMDB ID and pad with up to 6 zeroes
     imdbID = ("000000" + Math.random(1,3610267+1)).slice(-7)
-    res.send "#{imdbID}"
     robot.http("http://www.omdbapi.com?r=json&i=tt#{imdbID}&tomatoes=true")
       .header('Accept', 'application/json')
       .get() (err, httpRes, body) ->
@@ -124,41 +87,45 @@ module.exports = (robot) ->
           res.send data.Error + " Try another search."
           return
 
-        Title = data.Title
-        Year = data.Year
-        Rating = data.Rated
-        Genres = data.Genre
-        Plot = data.Plot
-        Type = data.Type.charAt(0).toUpperCase() + data.Type.slice(1) #capitalize first letter
-        Poster = data.Poster
-        Metascore = data.Metascore
-        imdbScore = data.imdbRating
-        rtCriticScore = data.tomatoMeter
-        rtUserScore = data.tomatoUserMeter
-
-        if (Metascore != "N/A")
-          Metascore +="/100"
-
-        if (imdbScore != "N/A")
-          imdbScore +="/10"
-
-        if (rtCriticScore != "N/A")
-          rtCriticScore += "/100"
-
-        if (rtUserScore != "N/A")
-          rtUserScore += "/100"
-
-        if Poster is "N/A"
-          Poster = fs.ReadStream("./assets/notfound.png")
-          res.send "\n"
-        else
-          res.send "#{Poster}\n"
-
-        res.send "#{Title} - #{Rating} - #{Type} - (#{Year})\n
-          Genre(s): #{Genres}\n
-          Summary: #{Plot}\n
-          IMDB Rating: #{imdbScore}\n
-          Metacritic Rating: #{Metascore}\n
-          Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
-          Rotten Tomatoes User Rating: #{rtUserScore}"
+        outputMovieData(data, res)
         return
+
+outputMovieData = (data, res) ->
+  Title = data.Title
+  Year = data.Year
+  Rating = data.Rated
+  Genres = data.Genre
+  Plot = data.Plot
+  Type = data.Type.charAt(0).toUpperCase() + data.Type.slice(1) #capitalize first letter
+  Poster = data.Poster
+  Metascore = data.Metascore
+  imdbScore = data.imdbRating
+  rtCriticScore = data.tomatoMeter
+  rtUserScore = data.tomatoUserMeter
+
+  if (Metascore != "N/A")
+    Metascore +="/100"
+
+  if (imdbScore != "N/A")
+    imdbScore +="/10"
+
+  if (rtCriticScore != "N/A")
+    rtCriticScore += "/100"
+
+  if (rtUserScore != "N/A")
+    rtUserScore += "/100"
+
+  if Poster is "N/A"
+    Poster = fs.ReadStream("./assets/notfound.png")
+    res.send "\n"
+  else
+    res.send "#{Poster}\n"
+
+  res.send "#{Title} - #{Rating} - #{Type} - (#{Year})\n
+    Genre(s): #{Genres}\n
+    Summary: #{Plot}\n
+    IMDB Rating: #{imdbScore}\n
+    Metacritic Rating: #{Metascore}\n
+    Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
+    Rotten Tomatoes User Rating: #{rtUserScore}"
+  return
