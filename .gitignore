@@ -10,3 +10,4 @@ node_modules
 
 .hubot_history
 .DS_Store
+npm-debug.log
