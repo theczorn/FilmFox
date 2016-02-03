@@ -11,15 +11,31 @@ module.exports = (robot) ->
     fs.ReadStream("./assets/foxy.gif")
 
   ###
-  # Summary: Do a series of http calls and retrieve where target media is
-  # streaming
+  # Summary: Call on FlixFindr to determine if media is streaming
   # Input: Name of target media.
   # Output: Series of resultant data to refine from
   #           OR
   #         Ability to stream media target on various platforms
   ###
-  #robot.respond /streamit (.+)/i, (res) ->
-  #  res.send "TBD"
+  robot.respond /streamit (.+)/i, (res) ->
+  mediaTitle = res.match[1]
+
+  queryFilter = {"filters":[
+    {"name":"title","op":"eq","val":"#{mediaTitle}"}
+    ,{"name":"availabilities","op":"any","val":
+      {"name":"filter_property","op":"in","val":[
+        "itunes:hd rental"
+        ,"itunes:sd rental"
+        ,"netflix:"
+        ,"hulu:free"
+        ,"hulu:plus"
+        ,"prime:"
+        ,"hbogo:"
+        ,"showtime:"
+        ,"crackle:"]
+      }
+    }]
+  }
 
   ###
   # Summary: Retrieve summary of info about media
