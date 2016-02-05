@@ -9,6 +9,7 @@ module.exports = (robot) ->
   #Get Foxy With it
   robot.respond /get foxy/i, (res) ->
     fs.ReadStream("./assets/foxy.gif")
+    return
 
   ###
   # Summary: Call on FlixFindr to determine if media is streaming
@@ -17,25 +18,45 @@ module.exports = (robot) ->
   #           OR
   #         Ability to stream media target on various platforms
   ###
-  robot.respond /streamit (.+)/i, (res) ->
-  mediaTitle = res.match[1]
+  robot.respond /stream (.+)/i, (res) ->
+    mediaTitle = res.match[1]
 
-  queryFilter = {"filters":[
-    {"name":"title","op":"eq","val":"#{mediaTitle}"}
-    ,{"name":"availabilities","op":"any","val":
-      {"name":"filter_property","op":"in","val":[
-        "itunes:hd rental"
-        ,"itunes:sd rental"
-        ,"netflix:"
-        ,"hulu:free"
-        ,"hulu:plus"
-        ,"prime:"
-        ,"hbogo:"
-        ,"showtime:"
-        ,"crackle:"]
-      }
-    }]
-  }
+    queryURL = "http://flixfindr.com/api/movie?q="
+    queryFilter = "{\"filters\":[
+      {\"name\":\"title\",\"op\":\"eq\",\"val\":\"#{mediaTitle}\"}
+      ,{\"name\":\"availabilities\",\"op\":\"any\",\"val\":
+        {\"name\":\"filter_property\",\"op\":\"in\",\"val\":[
+          \"itunes:hd rental\"
+          ,\"itunes:sd rental\"
+          ,\"netflix:\"
+          ,\"hulu:free\"
+          ,\"hulu:plus\"
+          ,\"prime:\"
+          ,\"hbogo:\"
+          ,\"showtime:\"
+          ,\"crackle:\"
+        ]}}]}"
+
+    queryURL += encodeURIComponent(queryFilter)
+    res.send "#{queryURL}"
+    robot.http(queryURL)
+      .header('Accept', 'application/json')
+      .get() (err, httpRes, body) ->
+        try
+          data = httpRes
+          res.send "#{data}"
+        catch error
+          res.send "JSON Parsing Error: #{error}"
+          return
+
+        if(data.Response == "False")
+          res.send data.Error + " Try another search."
+          return
+
+        numbers = data[0]
+        res.send "hello #{numbers}"
+
+    return
 
   ###
   # Summary: Retrieve summary of info about media
