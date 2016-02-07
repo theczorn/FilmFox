@@ -21,8 +21,7 @@ module.exports = (robot) ->
   robot.respond /stream (.+)/i, (res) ->
     mediaTitle = res.match[1]
 
-    queryURL = "http://flixfindr.com/api/movie?q="
-    queryFilter = "{\"filters\":[
+    queryFilter = encodeURI("{\"filters\":[
       {\"name\":\"title\",\"op\":\"eq\",\"val\":\"#{mediaTitle}\"}
       ,{\"name\":\"availabilities\",\"op\":\"any\",\"val\":
         {\"name\":\"filter_property\",\"op\":\"in\",\"val\":[
@@ -35,28 +34,23 @@ module.exports = (robot) ->
           ,\"hbogo:\"
           ,\"showtime:\"
           ,\"crackle:\"
-        ]}}]}"
+        ]}}]}")
 
-    queryURL += encodeURIComponent(queryFilter)
-    res.send "#{queryURL}"
-    robot.http(queryURL)
-      .header('Accept', 'application/json')
+    robot.http("http://flixfindr.com/api/movie")
+      .query(q: queryFilter)
+      .headers(Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        ,'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:44.0) Gecko/20100101 Firefox/44.0'
+        ,Cookie: '_ga=GA1.2.776933363.1454470576')
       .get() (err, httpRes, body) ->
         try
-          data = httpRes
-          res.send "#{data}"
+          console.log(httpRes)
+          console.log(body)
         catch error
           res.send "JSON Parsing Error: #{error}"
           return
 
-        if(data.Response == "False")
-          res.send data.Error + " Try another search."
-          return
-
-        numbers = data[0]
-        res.send "hello #{numbers}"
-
-    return
+        #numbers = data[0]
+        #res.send "hello #{numbers}"
 
   ###
   # Summary: Retrieve summary of info about media
@@ -82,8 +76,9 @@ module.exports = (robot) ->
       queryURL+="&y=#{mediaYear}"
 
     #Alter to use search results
+    #NOTE: Due to optional vars we can't use ".query" operation
     robot.http(queryURL)
-      .header('Accept', 'application/json')
+      .headers(Accept: 'application/json')
       .get() (err, httpRes, body) ->
         try
           data = JSON.parse body
@@ -110,9 +105,13 @@ module.exports = (robot) ->
   robot.respond /random/i, (res) ->
     #Generate IMDB ID and pad with up to 6 zeroes
     imdbID = ("000000" + Math.random(1,3610267+1)).slice(-7)
-    robot.http("http://www.omdbapi.com?r=json&i=tt#{imdbID}&tomatoes=true")
-      .header('Accept', 'application/json')
+
+    robot.http("http://www.omdbapi.com/")
+      .headers(Accept: 'application/json')
+      .query(r: "json", i: "tt#{imdbID}", tomatoes: "true")
       .get() (err, httpRes, body) ->
+
+      #tell this thing to bug off if not HTTP 200
         try
           data = JSON.parse body
         catch error
