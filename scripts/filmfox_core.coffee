@@ -21,7 +21,7 @@ module.exports = (robot) ->
   robot.respond /stream (.+)/i, (res) ->
     mediaTitle = res.match[1]
 
-    queryFilter = encodeURI("{\"filters\":[
+    queryFilter = "{\"filters\":[
       {\"name\":\"title\",\"op\":\"eq\",\"val\":\"#{mediaTitle}\"}
       ,{\"name\":\"availabilities\",\"op\":\"any\",\"val\":
         {\"name\":\"filter_property\",\"op\":\"in\",\"val\":[
@@ -34,17 +34,14 @@ module.exports = (robot) ->
           ,\"hbogo:\"
           ,\"showtime:\"
           ,\"crackle:\"
-        ]}}]}")
+        ]}}]}"
 
-    robot.http("http://flixfindr.com/api/movie")
+    robot.http("http://www.flixfindr.com/api/movie")
       .query(q: queryFilter)
-      .headers(Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-        ,'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:44.0) Gecko/20100101 Firefox/44.0'
-        ,Cookie: '_ga=GA1.2.776933363.1454470576')
+      .headers(Accept: 'application/json')
       .get() (err, httpRes, body) ->
         try
-          console.log(httpRes)
-          console.log(body)
+          data = JSON.parse body
         catch error
           res.send "JSON Parsing Error: #{error}"
           return
