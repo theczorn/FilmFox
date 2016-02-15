@@ -41,14 +41,14 @@ module.exports = (robot) ->
       .headers(Accept: 'application/json')
       .get() (err, httpRes, body) ->
         try
-          data = JSON.parse body
+          rawData = JSON.parse body
+          data = rawData.objects[0]
         catch error
           res.send "JSON Parsing Error: #{error}"
           return
 
-        #numbers = data[0]
-        #res.send "hello #{numbers}"
-
+        outputStreamingData(data, res)
+        return
   ###
   # Summary: Retrieve summary of info about media
   # Input:
@@ -122,6 +122,11 @@ module.exports = (robot) ->
         outputMovieData(data, res)
         return
 
+###
+# Summary: Handles finer parsing and output of OMDBapi data
+# Input: http GET data and response stream
+# Output: Parsed JSON data from OMDBapi to chatroom
+###
 outputMovieData = (data, res) ->
   Title = data.Title
   Year = data.Year
@@ -160,4 +165,56 @@ outputMovieData = (data, res) ->
     Metacritic Rating: #{Metascore}\n
     Rotten Tomatoes Critics Rating: #{rtCriticScore}\n
     Rotten Tomatoes User Rating: #{rtUserScore}"
+  return
+
+###
+# Summary: Handles finer parsing and output of FlixFindr data
+# Input: http GET data and response stream
+# Output: Parsed JSON data from FlixFindr to chatroom
+###
+outputStreamingData = (data, res) ->
+  Title = data.title
+  Year = data.year
+  Rating = data.mpaa_rating
+  Plot = data.synopsis
+  Poster = data.poster
+
+  Services = parseServiceList(data, res)
+
+  if Poster is "N/A"
+    Poster = fs.ReadStream("./assets/notfound.png")
+    res.send "\n"
+  else
+    res.send "#{Poster}\n"
+
+    res.send "#{Title} - #{Rating} - (#{Year})\n
+      Summary: #{Plot}\n\n
+      #{Services}"
+  return
+
+parseServiceList = (data, res) ->
+  rawServices = data.availabilities
+  servicesList = ""
+
+  for service in rawServices
+    if !service.price?
+    then price = "0.00"
+    else price = service.price
+
+    servicesList +=
+    "#{service.source.charAt(0).toUpperCase() + service.source.slice(1)} - #{service.channel}\n
+    Cost: $#{price}\n
+    Link: #{service.link}\n\n"
+
+  return servicesList
+
+###
+# Summary: Call on FlixFindr to determine if media is streaming
+# Input: Name of target media.
+# Output: Returns to calling method
+#         OR
+#         Raises appropriate error message due to failed request
+###
+handleHttpResponse = () ->
+  #CZTODO: Not Implemented Yet
   return
