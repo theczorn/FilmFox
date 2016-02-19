@@ -64,17 +64,13 @@ module.exports = (robot) ->
     mediaType = res.match[2]
     mediaYear = res.match[3]
 
-    queryURL = "http://www.omdbapi.com?r=json&t=#{mediaTitle}&tomatoes=true"
     if mediaType?
       mediaType = if mediaType[2] == "s" then "series" else "movie"
-      queryURL+="&type=#{mediaType}"
     if mediaYear?
       mediaYear = mediaYear.replace "--",""
-      queryURL+="&y=#{mediaYear}"
 
-    #Alter to use search results
-    #NOTE: Due to optional vars we can't use ".query" operation
-    robot.http(queryURL)
+  robot.http("http://www.omdbapi.com")
+      .query(t: mediaTitle, r: "json", tomatoes: true, type: mediaType, y: mediaYear)
       .headers(Accept: 'application/json')
       .get() (err, httpRes, body) ->
         try
